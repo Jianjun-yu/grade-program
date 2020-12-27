@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Date    : 2019-09-28
+# @Author  : ${jianjun} (${jianjyu@uiowa.edu})
+# @Link    : ${Na}
+# @Version : $Id$
+
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+import time 
+from bs4 import BeautifulSoup
+import sys
+import os
+import copy
+#打开浏览器，讲道理其实有效率更高的方法的，不过比较懒也不差这点效率了，问题不大
+uiowaweb = webdriver.Chrome()
+#打开指定网页
+uiowatest = "https://uiowa.instructure.com/courses/115342/files/10003643?module_item_id=2956932"
+uiowaweb.get(uiowatest)
+#等待网页加载，至少一秒，一般应该5-10秒，取决于网速
+time.sleep(5)
+#登录hawkid账号
+uiowaweb.find_element_by_id("hawkid").send_keys("jianjyu@uiowa.edu")
+uiowaweb.find_element_by_id("password").send_keys("yu19600905")
+a = copy.copy(uiowaweb.current_url)[0:24]
+uiowaweb.find_element_by_name("uip_action").click()
+#i = 0
+#print (a)
+#print (uiowaweb.current_url)
+#while uiowaweb.current_url[0:24] == a :
+#	print (uiowaweb.current_url)
+#	time.sleep(5)
+#	i = i + 1
+#	print (i)
+#	if i == 3:
+#		print ("Loading failure")
+#		os._exit(0)
+#print(a)
+#print(uiowaweb.current_url)
+#print("it works")
+#通过手机二次验证，感觉安全性还挺高的，懒得读取了直接模拟鼠标反正也不差这点效率，问题不大
+#确定鼠标起始点
+mouse = uiowaweb.find_element_by_link_text("More Information on Two-Step Login")
+#启动鼠标模拟
+action = ActionChains(uiowaweb)
+#确定向目标方向移动距离即后续操作，执行上述所有行动
+action.move_to_element_with_offset(mouse,300,-435).click().perform()
+#等待手机响应完成二次验证，然后等待网页加载，此处下面应该写一个try函数加强一下防止手残党5秒完不成验证
+#uiowaweb.find_element_by_link_text("Main Site - POLI:1501:0AAA Fall19 Introduction to American Foreign Policy").click()
+#a = uiowaweb.find_element_by_xpath("//*").get_attribute("outerHTML")
+targertweb = BeautifulSoup(uiowaweb.page_source,'lxml')
+a = uiowaweb.find_elements_by_id("doc_preview")
+#iframe = uiowaweb.find_element_by_xpath("//*[@id='doc_preview']/div/iframe")
+#加载进入文本框
+uiowaweb.switch_to.frame(uiowaweb.find_element_by_xpath("//*[@id='doc_preview']/div/iframe"))
+#等待文本加载，我感觉5秒够了，如果是比较长的paper应该长一点。
+wait = WebDriverWait(uiowaweb,0)
+print ((By.CLASS_NAME, "textLayer--absolute"))
+print (expected_conditions.element_to_be_clickable((By.CLASS_NAME , "textLayer--absolute")))
+#每500毫秒轮检一次，其实还不如sleep效率高，但是稳的一批，谁知道网络会出什么鬼
+wait.until(expected_conditions.element_to_be_clickable((By.CLASS_NAME , "textLayer--absolute")))
+#加载过滤模块，注意，要配置lxml环境，或者使用python内置方法，不过忘记python内置方法是什么了....
+textweb = BeautifulSoup(uiowaweb.page_source,'lxml')
+#定位文本位置，读取全部含文本元素，这个地方之前要补一个检测未提交的方法，然后用try函数加强
+allcontent = textweb.find_all(class_="textLayer--absolute")
+#通过循环，依次抽取含文本元素
+for eachsentence in allcontent:
+	#print(eachsentence)
+	#print(type(eachsentence))
+	#print(len(eachsentence))
+	#将元素中的文本取出
+	sentence = eachsentence.getText()
+	#打印出来，是应该存在一个list好，还是这个地方直接测关键字好一些，这个问题挺大的.....
+	print (sentence)
+#print(iframe)
+#print(iframe.get_attribute("style"))
+#print(iframe.get_attribute("src"))
